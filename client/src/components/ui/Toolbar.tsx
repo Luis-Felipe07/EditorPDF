@@ -1,36 +1,18 @@
 import React, { useRef } from 'react';
 import { usePDFStore, type ToolType } from '../../store/usePDFStore';
 import { 
-  MousePointer2, 
-  Hand, 
-  Pencil, 
-  Type, 
-  Eraser, 
-  ZoomIn, 
-  ZoomOut, 
-  Upload, 
-  Download,
-  FileUp
+  MousePointer2, Hand, Pencil, Type, Eraser, 
+  ZoomIn, ZoomOut, Upload, Download, FileText, ChevronDown 
 } from 'lucide-react';
 
 export const Toolbar = () => {
-  // 1. Conectamos con el cerebro (Zustand)
   const { 
-    activeTool, 
-    setActiveTool, 
-    zoomLevel, 
-    setZoomLevel, 
-    pdfFile,
-    setPdfFile 
+    activeTool, setActiveTool, 
+    zoomLevel, setZoomLevel, 
+    pdfFile, setPdfFile 
   } = usePDFStore();
 
-  // Referencia para el input de archivo oculto
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // --- Handlers ---
-
-  const handleZoomIn = () => setZoomLevel(zoomLevel + 0.1);
-  const handleZoomOut = () => setZoomLevel(zoomLevel - 0.1);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -38,24 +20,41 @@ export const Toolbar = () => {
     }
   };
 
-  const handleSave = () => {
-    // Aquí conectaremos la lógica de pdf-lib más adelante
-    alert("Funcionalidad de guardar pendiente de implementar con pdf-lib");
-  };
-
-  // Helper para clases de botones activos
-  const getButtonClass = (tool: ToolType) => {
-    const baseClass = "p-2 rounded-lg transition-colors duration-200 flex items-center justify-center";
-    return activeTool === tool 
-      ? `${baseClass} bg-blue-100 text-blue-600 border border-blue-200` // Activo
-      : `${baseClass} hover:bg-gray-100 text-gray-700 border border-transparent`; // Inactivo
-  };
+  // Botón reutilizable para herramientas con estilo "activo"
+  const ToolButton = ({ tool, icon: Icon, label }: { tool: ToolType, icon: any, label: string }) => (
+    <button
+      onClick={() => setActiveTool(tool)}
+      title={label}
+      className={`
+        relative group p-2 rounded-lg transition-all duration-200
+        ${activeTool === tool 
+          ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20' // Estado Activo
+          : 'text-slate-400 hover:bg-slate-800 hover:text-white' // Estado Inactivo
+        }
+      `}
+    >
+      <Icon size={20} />
+      {/* Tooltip simple */}
+      <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-slate-900 text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+        {label}
+      </span>
+    </button>
+  );
 
   return (
-    <div className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm px-4 py-2 flex items-center justify-between h-16">
+    <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 shadow-lg z-50">
       
-      {/* SECCIÓN 1: Archivo */}
-      <div className="flex items-center gap-2 border-r pr-4 border-gray-300">
+      {/* SECCIÓN 1: Logo y Archivo (Izquierda) */}
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2 text-white font-bold text-xl tracking-tight">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <FileText size={18} className="text-white" />
+          </div>
+          <span>Editor<span className="text-blue-500">PDF</span></span>
+        </div>
+
+        <div className="h-6 w-px bg-slate-700 mx-2"></div>
+
         <input 
           type="file" 
           accept="application/pdf" 
@@ -66,66 +65,45 @@ export const Toolbar = () => {
         
         <button 
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-slate-800 rounded-md hover:bg-slate-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-full transition-colors border border-slate-700"
         >
-          <FileUp size={18} />
-          {pdfFile ? "Cambiar PDF" : "Subir PDF"}
-        </button>
-
-        <button 
-          onClick={handleSave}
-          className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
-          title="Guardar PDF"
-        >
-          <Download size={20} />
+          <Upload size={16} />
+          {pdfFile ? "Cambiar Archivo" : "Subir PDF"}
         </button>
       </div>
 
-      {/* SECCIÓN 2: Herramientas de Edición */}
-      <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
-        <button onClick={() => setActiveTool('select')} className={getButtonClass('select')} title="Seleccionar">
-          <MousePointer2 size={20} />
-        </button>
-        
-        <button onClick={() => setActiveTool('hand')} className={getButtonClass('hand')} title="Mover Página (Mano)">
-          <Hand size={20} />
-        </button>
-
-        <div className="w-px h-6 bg-gray-300 mx-1"></div> {/* Separador */}
-
-        <button onClick={() => setActiveTool('draw')} className={getButtonClass('draw')} title="Dibujar">
-          <Pencil size={20} />
-        </button>
-
-        <button onClick={() => setActiveTool('text')} className={getButtonClass('text')} title="Texto">
-          <Type size={20} />
-        </button>
-
-        <button onClick={() => setActiveTool('eraser')} className={getButtonClass('eraser')} title="Borrador">
-          <Eraser size={20} />
-        </button>
+      {/* SECCIÓN 2: Herramientas Centrales (La Isla) */}
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 bg-slate-950/50 backdrop-blur-sm p-1.5 rounded-xl border border-slate-800 shadow-xl">
+        <ToolButton tool="select" icon={MousePointer2} label="Seleccionar" />
+        <ToolButton tool="hand" icon={Hand} label="Mover" />
+        <div className="w-px h-6 bg-slate-800 mx-1"></div>
+        <ToolButton tool="draw" icon={Pencil} label="Dibujar" />
+        <ToolButton tool="text" icon={Type} label="Texto" />
+        <ToolButton tool="eraser" icon={Eraser} label="Borrador" />
       </div>
 
-      {/* SECCIÓN 3: Zoom y Vista */}
-      <div className="flex items-center gap-2 border-l pl-4 border-gray-300">
+      {/* SECCIÓN 3: Zoom y Acciones (Derecha) */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 bg-slate-800 rounded-lg p-1 border border-slate-700">
+          <button onClick={() => setZoomLevel(zoomLevel - 0.1)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md">
+            <ZoomOut size={16} />
+          </button>
+          <span className="text-xs font-mono text-slate-300 w-12 text-center">
+            {Math.round(zoomLevel * 100)}%
+          </span>
+          <button onClick={() => setZoomLevel(zoomLevel + 0.1)} className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md">
+            <ZoomIn size={16} />
+          </button>
+        </div>
+
         <button 
-          onClick={handleZoomOut} 
-          className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600"
+          className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 text-sm font-semibold rounded-lg hover:bg-slate-100 transition-colors shadow-lg shadow-white/10"
+          onClick={() => alert("Próximamente: Exportar PDF modificado")}
         >
-          <ZoomOut size={20} />
-        </button>
-        
-        <span className="w-16 text-center text-sm font-semibold text-gray-700 select-none">
-          {Math.round(zoomLevel * 100)}%
-        </span>
-        
-        <button 
-          onClick={handleZoomIn} 
-          className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600"
-        >
-          <ZoomIn size={20} />
+          <Download size={18} />
+          Exportar
         </button>
       </div>
-    </div>
+    </header>
   );
 };
