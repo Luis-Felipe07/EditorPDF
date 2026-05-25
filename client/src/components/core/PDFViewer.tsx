@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import * as pdfjs from 'pdfjs-dist';
+// Importamos el worker directamente desde node_modules usando el sufijo "?url" de Vite
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'; 
 import { usePDFStore } from '../../store/usePDFStore';
 import { PDFPage } from './PDFPage';
 
-// Aseguramos la ruta del worker
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
+// Asignamos la URL dinámica que Vite generó
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 export const PDFViewer = () => {
   const { pdfFile, setTotalPages } = usePDFStore();
